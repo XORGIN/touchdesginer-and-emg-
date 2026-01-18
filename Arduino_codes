@@ -1,0 +1,107 @@
+Arduino codes
+
+// 0 : Nano + MyoWare (raw data )//
+const int EMG_PIN = A0;
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  int v = analogRead(EMG_PIN); // 0..1023
+  Serial.println(v);           // une valeur par ligne
+  delay(2);
+}
+
+
+//1 : Exponential smoothing//
+const int EMG_PIN = A0;
+float s = 0.0;
+const float alpha = 0.15; // 0.05 très lisse / 0.2 réactif
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  int v = analogRead(EMG_PIN);
+  s = alpha * v + (1.0 - alpha) * s;
+  Serial.println((int)s);
+  delay(2);
+}
+
+
+//2 : baseline + correction + global//
+const int EMG_PIN = A0;
+
+float baseline = 0.0;
+float env = 0.0;
+
+const float baseAlpha = 0.01; // baseline lente (retire le DC)
+const float envAlpha  = 0.2;  // enveloppe (réactivité)
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  int v = analogRead(EMG_PIN);
+
+  baseline = (1.0 - baseAlpha) * baseline + baseAlpha * v;
+  float rect = fabs(v - baseline);
+  env = (1.0 - envAlpha) * env + envAlpha * rect;
+
+  Serial.println((int)env);
+  delay(2);
+}
+
+
+3 : leaves one float 0..1 (to managed)
+const int EMG_PIN = A0;
+
+float baseline = 0.0;
+float env = 0.0;
+const float baseAlpha = 0.01;
+const float envAlpha  = 0.2;
+
+// À calibrer selon ton repos et ta contraction
+float envMin = 0.0;     // repos
+float envMax = 250.0;   // contraction forte
+
+float clamp01(float x) { return x < 0 ? 0 : (x > 1 ? 1 : x); }
+
+void setup() {
+  Serial.begin(115200);
+}
+
+void loop() {
+  int v = analogRead(EMG_PIN);
+
+  baseline = (1.0 - baseAlpha) * baseline + baseAlpha * v;
+  float rect = fabs(v - baseline);
+  env = (1.0 - envAlpha) * env + envAlpha * rect;
+
+  float norm = (env - envMin) / (envMax - envMin);
+  norm = clamp01(norm);
+
+  Serial.println(norm, 3); // ex: 0.000 à 1.000
+  delay(2);
+}
+
+
+
+
+// Touchdesginer managed
+- 0:
+    • math1 : From 0..1023 → To 0..1
+    • limit1 : clamp 0..1
+    • trigger1 threshold : ~0.6
+
+-2:     •See max in trail1  :
+    • math1 : From 0..(ton max env) → To 0..1
+    • trigger1 threshold : 0.4–0.7 (à ajuster)
+
+-3: 
+    • math1 optional
+    • limit1 keeping clamp
+    • trigger1 threshold : 0.5–0.7
