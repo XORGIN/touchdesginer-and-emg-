@@ -1,0 +1,24 @@
+
+
+Stage B2. Control points sizes (biological effect)
+inside "Line1" Point section:
+-> "Point Size Multiplier" :  1 + op('limit1')['chan1'] * 4
+
+
+
+
+D- Make parents signal into visual ( biological wave)
+Control "Noise Sop Amplitude" with "Trigger":
+Inside noise1(SOP) -> Amplitude:   op('trigger1')['chan1'] * 0.5
+
+F- Add audio 
+Inside audioosc1-> Amplitude: op('trigger1')['chan1'] * 0.4
+
+Option: Altitude audio: inside audioosci1 -> Base Frequency: 80 + op('trigger1')['chan1'] * 220
+
+G- Biological deformation
+Inside noise1-> Amplitude: op('trigger1')['chan1'] * 0.5
+
+Materials : points pulsation:
+Insde line1-> Point Size Multiplier : 1 + op('limit1')['chan1'] * 4
+
